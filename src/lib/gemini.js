@@ -15,7 +15,7 @@ export async function generateSummaries(text) {
   const summaries = {};
 
   for (const [length, description] of Object.entries(summaryLengths)) {
-    const prompt = `Summarize the following text in ${description}. Focus on the main ideas and key information:\n\n${text}`;
+    const prompt = `Summarize the following text in ${description}. Focus on the main ideas and key information:\n\n${text}.Suugets some improvents too:\n\n${text}`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,

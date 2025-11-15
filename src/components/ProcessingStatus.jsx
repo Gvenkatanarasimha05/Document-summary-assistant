@@ -1,101 +1,109 @@
-import { useState, useRef } from 'react';
-import { Upload, FileText, Image as ImageIcon } from 'lucide-react';
+import { Loader2, FileText, Sparkles, CheckCircle } from "lucide-react";
 
-export default function FileUpload({ onFileSelect, isProcessing }) {
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
+export default function ProcessingStatus({ stage, progress, fileName }) {
+  const stages = [
+    { id: "uploading", label: "Uploading Document", icon: FileText },
+    { id: "extracting", label: "Extracting Text", icon: FileText },
+    { id: "summarizing", label: "Generating Summaries", icon: Sparkles },
+    { id: "complete", label: "Complete", icon: CheckCircle },
+  ];
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    const validFile = files.find(
-      (file) =>
-        file.type === "application/pdf" ||
-        file.type.startsWith("image/")
-    );
-
-    if (validFile) {
-      onFileSelect(validFile);
-    } else {
-      alert("Please upload a PDF or image file");
-    }
-  };
-
-  const handleFileInput = (e) => {
-    const file = e.target.files[0];
-    if (file) onFileSelect(file);
-  };
-
-  const handleClick = () => {
-    if (!isProcessing) fileInputRef.current?.click();
-  };
+  let currentIndex = stages.findIndex((s) => s.id === stage);
+  if (currentIndex === -1) currentIndex = 0;
 
   return (
     <div
-      onClick={handleClick}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={` 
-        relative rounded-2xl border-2 border-dashed p-12 
-        text-center cursor-pointer transition-all duration-200 ease-in-out 
-        bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm 
-        shadow-sm hover:shadow-md dark:shadow-none
-
-        ${isDragging
-          ? "border-blue-500 bg-blue-50/70 dark:bg-blue-900/30 scale-[1.03]"
-          : "border-gray-300 dark:border-gray-700 hover:bg-gray-50/70 dark:hover:bg-gray-800"
-        }
-
-        ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}
-      `}
+      className="
+        p-6 rounded-xl border shadow-sm dark:shadow-none
+        bg-white dark:bg-gray-900
+        border-gray-200 dark:border-gray-700
+        transition-all duration-200
+      "
     >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,image/*"
-        onChange={handleFileInput}
-        className="hidden"
-        disabled={isProcessing}
-      />
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+            Processing Document
+          </h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{fileName}</p>
+      </div>
 
-      <div className="flex flex-col items-center gap-5">
-        <Upload className="w-12 h-12 text-gray-400 dark:text-gray-500 transition-transform" />
+      {/* Stages */}
+      <div className="space-y-4">
+        {stages.map((item, i) => {
+          const Icon = item.icon;
+          const active = i === currentIndex;
+          const done = i < currentIndex;
 
-        <div>
-          <p className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1">
-            {isDragging ? "Drop your file here" : "Upload a document"}
-          </p>
+          return (
+            <div key={item.id} className="flex items-center gap-3">
+              <div
+                className={`
+                  w-8 h-8 rounded-full flex justify-center items-center
+                  transition-all duration-200
+                  ${
+                    done
+                      ? "bg-green-200 dark:bg-green-900/40"
+                      : active
+                      ? "bg-blue-200 dark:bg-blue-900/40"
+                      : "bg-gray-200 dark:bg-gray-700"
+                  }
+                `}
+              >
+                <Icon
+                  className={`
+                    w-4 h-4
+                    ${
+                      done
+                        ? "text-green-600 dark:text-green-400"
+                        : active
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }
+                  `}
+                />
+              </div>
 
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-            Drag & drop or click to browse files
-          </p>
+              <p
+                className={`
+                  text-sm font-medium
+                  ${
+                    done || active
+                      ? "text-gray-900 dark:text-gray-100"
+                      : "text-gray-500 dark:text-gray-400"
+                  }
+                `}
+              >
+                {item.label}
+              </p>
 
-          <div className="flex items-center justify-center gap-6 text-xs text-gray-400 dark:text-gray-500">
-            <div className="flex items-center gap-1">
-              <FileText className="w-4 h-4" />
-              <span>PDF</span>
+              {active && progress > 0 && stage === "extracting" && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {progress}%
+                </span>
+              )}
             </div>
+          );
+        })}
+      </div>
 
-            <div className="flex items-center gap-1">
-              <ImageIcon className="w-4 h-4" />
-              <span>Images</span>
-            </div>
+      {/* Progress Bar */}
+      {stage === "extracting" && progress > 0 && (
+        <div className="mt-5">
+          <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <div
+              className="
+                h-2 rounded-full bg-blue-600 dark:bg-blue-400 
+                transition-all duration-300
+              "
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

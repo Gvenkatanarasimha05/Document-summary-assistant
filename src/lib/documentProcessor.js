@@ -1,5 +1,7 @@
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.js?url";
+import { createWorker } from "tesseract.js";
+
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
